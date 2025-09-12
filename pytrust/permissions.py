@@ -1,5 +1,5 @@
 """
-Permissions analysis logic for deepi CLI.
+Permissions analysis logic for pytrust CLI.
 """
 import ast
 import importlib
@@ -28,7 +28,7 @@ def analyze_package(package_name: str) -> PermissionReport:
     try:
         module = importlib.import_module(package_name)
     except Exception:
-        raise RuntimeError(f"Could not import package '{package_name}'")
+        return report
     # Find source files
     files = []
     if hasattr(module, "__file__"):

@@ -7,7 +7,8 @@
 - [x] Launch the Project
 - [x] Ensure Documentation is Complete
 
-Project: deepi
+Project: pytrust
 Type: Python CLI
 Uses pyproject.toml
 Function: Checks package for file system, env var, web requests, exec usage
+Renamed from deepi to pytrust

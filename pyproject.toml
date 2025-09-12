@@ -1,6 +1,6 @@
 [project]
 
-name = "deepi"
+name = "pytrust"
 version = "0.1.0"
 description = "CLI tool to check package permissions."
 authors = [{name = "Martin Thoma", email = "info@martin-thoma.de"}]
@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [project.scripts]
-deepi = "deepi.cli:main"
+pytrust = "pytrust.cli:main"
 
 [build-system]
 requires = ["flit_core >=3.2,<4"]
