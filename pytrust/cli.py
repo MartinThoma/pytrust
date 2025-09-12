@@ -16,16 +16,22 @@ from .permissions import PermissionReport, analyze_package, get_permission_viola
 @click.version_option(__version__, prog_name="pytrust")
 def main(package=None, permissions_file=None, skip=(), verbose=False):
     """Check package permissions."""
+    # Normalize skip list
+    skip = {s.strip().lower() for s in skip}
+
     if permissions_file:
         with open(permissions_file) as f:
             permissions_dict = yaml.safe_load(f)
         if not isinstance(permissions_dict, dict):
             click.echo("permissions.yaml must be a dictionary with package names as keys.")
             raise SystemExit(1)
+        # Normalize keys in permissions_dict
+        permissions_dict = {k.strip().lower(): v for k, v in permissions_dict.items()}
     else:
         permissions_dict = None
 
     if package:
+        package = package.strip().lower()
         report = analyze_package(package)
         if permissions_dict:
             pkg_perms = permissions_dict.get(package)
@@ -64,10 +70,11 @@ def main(package=None, permissions_file=None, skip=(), verbose=False):
             raise SystemExit(1) from e
 
         # Filter out default/builtin packages
-        stdlib = set(sys.builtin_module_names)
+        stdlib = {s.strip().lower() for s in sys.builtin_module_names}
         # Optionally, add more stdlib modules to exclude
         exclude = stdlib | {"pip", "setuptools", "wheel", "pkg_resources", "importlib_metadata"}
-        packages = [pkg for pkg in installed if pkg not in exclude and pkg not in skip]
+        exclude = {s.strip().lower() for s in exclude}
+        packages = [pkg.strip().lower() for pkg in installed if pkg.strip().lower() not in exclude and pkg.strip().lower() not in skip]
         all_reports = {}
         with click.progressbar(packages, label="Analyzing installed packages", file=sys.stderr) as bar:
             max_chars = 20
@@ -90,7 +97,10 @@ def main(package=None, permissions_file=None, skip=(), verbose=False):
                 display_name = (pkg[:17] + "...") if len(pkg) > max_chars else pkg.ljust(max_chars)
                 bar.label = f"Analyzing: {display_name}"
                 bar.update(0)
-                all_reports[pkg] = analyze_package(pkg).as_dict()
+                try:
+                    all_reports[pkg] = analyze_package(pkg).as_dict()
+                except Exception as e:
+                    click.echo(f"Could not analyze '{pkg}': {e}")
         click.echo(yaml.dump(all_reports, sort_keys=False))
 
 
