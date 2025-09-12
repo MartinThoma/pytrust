@@ -1,6 +1,7 @@
 """
 Permissions analysis logic for pytrust CLI.
 """
+
 import ast
 import importlib
 import os
@@ -8,12 +9,15 @@ import sys
 import types
 from typing import Dict, Any, List
 
+
 class PermissionReport:
-    def __init__(self):
-        self.file_system = False
-        self.env_vars = False
-        self.web_requests = False
-        self.exec_usage = False
+    def __init__(
+        self, file_system=False, env_vars=False, web_requests=False, exec_usage=False
+    ):
+        self.file_system = file_system
+        self.env_vars = env_vars
+        self.web_requests = web_requests
+        self.exec_usage = exec_usage
 
     def as_dict(self):
         return {
@@ -22,6 +26,7 @@ class PermissionReport:
             "web_requests": self.web_requests,
             "exec_usage": self.exec_usage,
         }
+
 
 def analyze_package(package_name: str) -> PermissionReport:
     report = PermissionReport()
@@ -67,11 +72,29 @@ def analyze_package(package_name: str) -> PermissionReport:
                     if isinstance(node.func, ast.Name) and node.func.id == "open":
                         report.file_system = True
                     # Detect exec/eval usage
-                    if isinstance(node.func, ast.Name) and node.func.id in ["exec", "eval"]:
+                    if isinstance(node.func, ast.Name) and node.func.id in [
+                        "exec",
+                        "eval",
+                    ]:
                         report.exec_usage = True
                     # Detect os.system, os.popen, os.spawn
-                    if isinstance(node.func, ast.Attribute) and node.func.attr in ["system", "popen", "spawn"]:
+                    if isinstance(node.func, ast.Attribute) and node.func.attr in [
+                        "system",
+                        "popen",
+                        "spawn",
+                    ]:
                         report.exec_usage = True
         except Exception:
             continue
     return report
+
+
+def get_permission_violations(
+    required_permissions: PermissionReport, given_permissions: PermissionReport
+):
+    violations = []
+    for key, required in required_permissions.as_dict().items():
+        given = given_permissions.as_dict().get(key, False)
+        if required and not given:
+            violations.append((key, required, given))
+    return violations
