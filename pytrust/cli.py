@@ -11,9 +11,10 @@ from .permissions import PermissionReport, analyze_package, get_permission_viola
 @click.command()
 @click.argument("package", required=False)
 @click.argument("permissions_file", required=False)
+@click.option("--skip", multiple=True, help="Package(s) to skip during analysis. Can be used multiple times.")
 @click.option("--verbose", is_flag=True, help="Print permissions.yaml content")
 @click.version_option(__version__, prog_name="pytrust")
-def main(package=None, permissions_file=None, verbose=False):
+def main(package=None, permissions_file=None, skip=(), verbose=False):
     """Check package permissions."""
     if permissions_file:
         with open(permissions_file) as f:
@@ -66,7 +67,7 @@ def main(package=None, permissions_file=None, verbose=False):
         stdlib = set(sys.builtin_module_names)
         # Optionally, add more stdlib modules to exclude
         exclude = stdlib | {"pip", "setuptools", "wheel", "pkg_resources", "importlib_metadata"}
-        packages = [pkg for pkg in installed if pkg not in exclude]
+        packages = [pkg for pkg in installed if pkg not in exclude and pkg not in skip]
         all_reports = {}
         with click.progressbar(packages, label="Analyzing installed packages", file=sys.stderr) as bar:
             max_chars = 20
@@ -82,7 +83,7 @@ def main(package=None, permissions_file=None, verbose=False):
     else:
         # No package: analyze all packages in permissions_file
         all_reports = {}
-        packages = [pkg for pkg in permissions_dict if pkg != "default"]
+        packages = [pkg for pkg in permissions_dict if pkg != "default" and pkg not in skip]
         max_chars = 20
         with click.progressbar(packages, label="Analyzing packages", file=sys.stderr) as bar:
             for pkg in bar:
