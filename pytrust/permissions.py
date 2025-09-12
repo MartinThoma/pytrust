@@ -7,26 +7,51 @@ import importlib
 import os
 
 
+class Permission:
+    def __init__(self, name, is_used):
+        self.name = name
+        self.is_used = is_used
+
+
+PERMISSIONS = [
+    Permission(
+        "file_system",
+        lambda node: (
+            (isinstance(node, ast.Import) and any(n.name in ["os", "shutil", "pathlib"] for n in node.names))
+            or (isinstance(node, ast.ImportFrom) and node.module in ["os", "shutil", "pathlib"])
+            or (isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "open")
+        ),
+    ),
+    Permission(
+        "env_vars",
+        lambda node: isinstance(node, ast.Attribute) and getattr(node, "attr", None) == "environ",
+    ),
+    Permission(
+        "web_requests",
+        lambda node: (
+            (isinstance(node, ast.Import) and any(n.name in ["requests", "http", "urllib", "aiohttp"] for n in node.names))
+            or (isinstance(node, ast.ImportFrom) and node.module in ["requests", "http", "urllib", "aiohttp"])
+        ),
+    ),
+    Permission(
+        "exec_usage",
+        lambda node: (
+            (isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in ["exec", "eval"])
+            or (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr in ["system", "popen", "spawn"])
+        ),
+    ),
+]
+
+
 class PermissionReport:
-    def __init__(
-        self, file_system=False, env_vars=False, web_requests=False, exec_usage=False,
-    ):
-        self.file_system = file_system
-        self.env_vars = env_vars
-        self.web_requests = web_requests
-        self.exec_usage = exec_usage
+    def __init__(self):
+        self.used = {perm.name: False for perm in PERMISSIONS}
+
+    def mark_used(self, perm_name):
+        self.used[perm_name] = True
 
     def as_dict(self):
-        result = {}
-        if self.file_system:
-            result["file_system"] = True
-        if self.env_vars:
-            result["env_vars"] = True
-        if self.web_requests:
-            result["web_requests"] = True
-        if self.exec_usage:
-            result["exec_usage"] = True
-        return result
+        return {k: True for k, v in self.used.items() if v}
 
 
 def analyze_package(package_name: str) -> PermissionReport:
@@ -51,39 +76,9 @@ def analyze_package(package_name: str) -> PermissionReport:
             with open(file, encoding="utf-8") as f:
                 tree = ast.parse(f.read(), filename=file)
             for node in ast.walk(tree):
-                # File system
-                if isinstance(node, ast.Import):
-                    for n in node.names:
-                        if n.name in ["os", "shutil", "pathlib"]:
-                            report.file_system = True
-                        if n.name in ["requests", "http", "urllib", "aiohttp"]:
-                            report.web_requests = True
-                if isinstance(node, ast.ImportFrom):
-                    if node.module in ["os", "shutil", "pathlib"]:
-                        report.file_system = True
-                    if node.module in ["requests", "http", "urllib", "aiohttp"]:
-                        report.web_requests = True
-                # Env vars
-                if isinstance(node, ast.Attribute) and getattr(node, "attr", None) == "environ":
-                        report.env_vars = True
-                # Exec usage
-                if isinstance(node, ast.Call):
-                    # Detect 'open' usage for file system
-                    if isinstance(node.func, ast.Name) and node.func.id == "open":
-                        report.file_system = True
-                    # Detect exec/eval usage
-                    if isinstance(node.func, ast.Name) and node.func.id in [
-                        "exec",
-                        "eval",
-                    ]:
-                        report.exec_usage = True
-                    # Detect os.system, os.popen, os.spawn
-                    if isinstance(node.func, ast.Attribute) and node.func.attr in [
-                        "system",
-                        "popen",
-                        "spawn",
-                    ]:
-                        report.exec_usage = True
+                for perm in PERMISSIONS:
+                    if perm.is_used(node):
+                        report.mark_used(perm.name)
         except Exception:
             continue
     return report
