@@ -37,13 +37,29 @@ Permission violations found:
 
 ### Analyze all installed (non-default) packages and print combined YAML
 ```bash
-$ pytrust
+$ pytrust > all-packages-permissions.yaml
 
+# Gives:
 pypdf:
   file_system: true
   env_vars: false
   web_requests: false
   exec_usage: false
+pytz:
+  file_system: true
+  env_vars: true
+  web_requests: false
+  exec_usage: false
+flit:
+  file_system: true
+  env_vars: true
+  web_requests: true
+  exec_usage: false
+six:
+  file_system: false
+  env_vars: false
+  web_requests: false
+  exec_usage: true
 ... (the list might be pretty long!)
 ```
 

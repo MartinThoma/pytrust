@@ -68,8 +68,12 @@ def main(package=None, permissions_file=None, verbose=False):
         exclude = stdlib | {"pip", "setuptools", "wheel", "pkg_resources", "importlib_metadata"}
         packages = [pkg for pkg in installed if pkg not in exclude]
         all_reports = {}
-        with click.progressbar(packages, label="Analyzing installed packages") as bar:
+        with click.progressbar(packages, label="Analyzing installed packages", file=sys.stderr) as bar:
+            max_chars = 20
             for pkg in bar:
+                display_name = (pkg[:17] + "...") if len(pkg) > max_chars else pkg.ljust(max_chars)
+                bar.label = f"Analyzing: {display_name}"
+                bar.update(0)
                 try:
                     all_reports[pkg] = analyze_package(pkg).as_dict()
                 except Exception:
@@ -79,8 +83,12 @@ def main(package=None, permissions_file=None, verbose=False):
         # No package: analyze all packages in permissions_file
         all_reports = {}
         packages = [pkg for pkg in permissions_dict if pkg != "default"]
-        with click.progressbar(packages, label="Analyzing packages") as bar:
+        max_chars = 20
+        with click.progressbar(packages, label="Analyzing packages", file=sys.stderr) as bar:
             for pkg in bar:
+                display_name = (pkg[:17] + "...") if len(pkg) > max_chars else pkg.ljust(max_chars)
+                bar.label = f"Analyzing: {display_name}"
+                bar.update(0)
                 all_reports[pkg] = analyze_package(pkg).as_dict()
         click.echo(yaml.dump(all_reports, sort_keys=False))
 
