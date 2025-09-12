@@ -1,8 +1,10 @@
+
 import sys
 
 import click
 import yaml
 
+from ._version import __version__
 from .permissions import PermissionReport, analyze_package, get_permission_violations
 
 
@@ -10,6 +12,7 @@ from .permissions import PermissionReport, analyze_package, get_permission_viola
 @click.argument("package", required=False)
 @click.argument("permissions_file", required=False)
 @click.option("--verbose", is_flag=True, help="Print permissions.yaml content")
+@click.version_option(__version__, prog_name="pytrust")
 def main(package=None, permissions_file=None, verbose=False):
     """Check package permissions."""
     if permissions_file:

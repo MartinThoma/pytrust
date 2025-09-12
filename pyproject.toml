@@ -1,7 +1,7 @@
 [project]
 
 name = "pytrust"
-version = "0.1.0"
+dynamic = ["version"]
 description = "CLI tool to check package permissions."
 authors = [{ name = "Martin Thoma", email = "info@martin-thoma.de" }]
 readme = "README.md"
