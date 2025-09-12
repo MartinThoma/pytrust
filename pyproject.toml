@@ -3,14 +3,10 @@
 name = "pytrust"
 version = "0.1.0"
 description = "CLI tool to check package permissions."
-authors = [{name = "Martin Thoma", email = "info@martin-thoma.de"}]
+authors = [{ name = "Martin Thoma", email = "info@martin-thoma.de" }]
 readme = "README.md"
 requires-python = ">=3.8"
-dependencies = [
-    "pyyaml",
-    "click",
-    "importlib-metadata; python_version<'3.8'"
-]
+dependencies = ["pyyaml", "click", "importlib-metadata; python_version<'3.8'"]
 
 [project.scripts]
 pytrust = "pytrust.cli:main"
@@ -18,3 +14,23 @@ pytrust = "pytrust.cli:main"
 [build-system]
 requires = ["flit_core >=3.2,<4"]
 build-backend = "flit_core.buildapi"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "ANN",
+    "BLE001",
+    "C901",
+    "D",
+    "E501",
+    "FBT002",
+    "FBT002",
+    "PERF203",
+    "PERF401",
+    "PLC0415",
+    "PLR0912",
+    "PLR0915",
+    "PTH118",
+    "PTH123",
+    "S112",
+]

@@ -5,14 +5,11 @@ Permissions analysis logic for pytrust CLI.
 import ast
 import importlib
 import os
-import sys
-import types
-from typing import Dict, Any, List
 
 
 class PermissionReport:
     def __init__(
-        self, file_system=False, env_vars=False, web_requests=False, exec_usage=False
+        self, file_system=False, env_vars=False, web_requests=False, exec_usage=False,
     ):
         self.file_system = file_system
         self.env_vars = env_vars
@@ -47,7 +44,7 @@ def analyze_package(package_name: str) -> PermissionReport:
     # Analyze AST for permissions
     for file in files:
         try:
-            with open(file, "r", encoding="utf-8") as f:
+            with open(file, encoding="utf-8") as f:
                 tree = ast.parse(f.read(), filename=file)
             for node in ast.walk(tree):
                 # File system
@@ -63,8 +60,7 @@ def analyze_package(package_name: str) -> PermissionReport:
                     if node.module in ["requests", "http", "urllib", "aiohttp"]:
                         report.web_requests = True
                 # Env vars
-                if isinstance(node, ast.Attribute):
-                    if getattr(node, "attr", None) == "environ":
+                if isinstance(node, ast.Attribute) and getattr(node, "attr", None) == "environ":
                         report.env_vars = True
                 # Exec usage
                 if isinstance(node, ast.Call):
@@ -90,7 +86,7 @@ def analyze_package(package_name: str) -> PermissionReport:
 
 
 def get_permission_violations(
-    required_permissions: PermissionReport, given_permissions: PermissionReport
+    required_permissions: PermissionReport, given_permissions: PermissionReport,
 ):
     violations = []
     for key, required in required_permissions.as_dict().items():
