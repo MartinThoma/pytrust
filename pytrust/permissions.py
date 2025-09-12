@@ -17,12 +17,16 @@ class PermissionReport:
         self.exec_usage = exec_usage
 
     def as_dict(self):
-        return {
-            "file_system": self.file_system,
-            "env_vars": self.env_vars,
-            "web_requests": self.web_requests,
-            "exec_usage": self.exec_usage,
-        }
+        result = {}
+        if self.file_system:
+            result["file_system"] = True
+        if self.env_vars:
+            result["env_vars"] = True
+        if self.web_requests:
+            result["web_requests"] = True
+        if self.exec_usage:
+            result["exec_usage"] = True
+        return result
 
 
 def analyze_package(package_name: str) -> PermissionReport:

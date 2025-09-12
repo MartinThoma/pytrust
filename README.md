@@ -77,6 +77,12 @@ pypdf:
 	exec_usage: false
 ```
 
+## Permissions
+
+* `INTERNET`: Is socket/urllib/requests used?
+* `FILE_SYSTEM`: Is the file system accessed?
+* `ENV_VARS`: Are environment variables accessed?
+* `EXEC_USAGE`: Is exec() or similar used?
 
 
 ## Contributing & Help
