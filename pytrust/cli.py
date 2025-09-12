@@ -12,9 +12,10 @@ from .permissions import PermissionReport, analyze_package, get_permission_viola
 @click.argument("package", required=False)
 @click.argument("permissions_file", required=False)
 @click.option("--skip", multiple=True, help="Package(s) to skip during analysis. Can be used multiple times.")
+@click.option("--output", type=click.Path(), default=None, help="Write report to this file, updating after each package.")
 @click.option("--verbose", is_flag=True, help="Print permissions.yaml content")
 @click.version_option(__version__, prog_name="pytrust")
-def main(package=None, permissions_file=None, skip=(), verbose=False):
+def main(package=None, permissions_file=None, skip=(), output=None, verbose=False):
     """Check package permissions."""
     # Normalize skip list
     skip = {s.strip().lower() for s in skip}
@@ -76,6 +77,10 @@ def main(package=None, permissions_file=None, skip=(), verbose=False):
         exclude = {s.strip().lower() for s in exclude}
         packages = [pkg.strip().lower() for pkg in installed if pkg.strip().lower() not in exclude and pkg.strip().lower() not in skip]
         all_reports = {}
+        if output:
+            # Write opening YAML mapping
+            with open(output, "w") as out:
+                out.write("---\n")
         with click.progressbar(packages, label="Analyzing installed packages", file=sys.stderr) as bar:
             max_chars = 20
             for pkg in bar:
@@ -83,13 +88,23 @@ def main(package=None, permissions_file=None, skip=(), verbose=False):
                 bar.label = f"Analyzing: {display_name}"
                 bar.update(0)
                 try:
-                    all_reports[pkg] = analyze_package(pkg).as_dict()
+                    result = analyze_package(pkg).as_dict()
+                    all_reports[pkg] = result
                 except Exception:
-                    all_reports[pkg] = {"error": "Could not analyze"}
-        click.echo(yaml.dump(all_reports, sort_keys=False))
+                    result = {"error": "Could not analyze"}
+                    all_reports[pkg] = result
+                if output:
+                    # Write/update YAML mapping after each package
+                    with open(output, "w") as out:
+                        yaml.dump(all_reports, out, sort_keys=False)
+        if not output:
+            click.echo(yaml.dump(all_reports, sort_keys=False))
     else:
         # No package: analyze all packages in permissions_file
         all_reports = {}
+        if output:
+            with open(output, "w") as out:
+                out.write("---\n")
         packages = [pkg for pkg in permissions_dict if pkg != "default" and pkg not in skip]
         max_chars = 20
         with click.progressbar(packages, label="Analyzing packages", file=sys.stderr) as bar:
@@ -98,10 +113,16 @@ def main(package=None, permissions_file=None, skip=(), verbose=False):
                 bar.label = f"Analyzing: {display_name}"
                 bar.update(0)
                 try:
-                    all_reports[pkg] = analyze_package(pkg).as_dict()
+                    result = analyze_package(pkg).as_dict()
+                    all_reports[pkg] = result
                 except Exception as e:
-                    click.echo(f"Could not analyze '{pkg}': {e}")
-        click.echo(yaml.dump(all_reports, sort_keys=False))
+                    result = {"error": f"Could not analyze: {e}"}
+                    all_reports[pkg] = result
+                if output:
+                    with open(output, "w") as out:
+                        yaml.dump(all_reports, out, sort_keys=False)
+        if not output:
+            click.echo(yaml.dump(all_reports, sort_keys=False))
 
 
 if __name__ == "__main__":
