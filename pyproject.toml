@@ -1,0 +1,20 @@
+[project]
+
+name = "deepi"
+version = "0.1.0"
+description = "CLI tool to check package permissions."
+authors = [{name = "Martin Thoma", email = "info@martin-thoma.de"}]
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "pyyaml",
+    "click",
+    "importlib-metadata; python_version<'3.8'"
+]
+
+[project.scripts]
+deepi = "deepi.cli:main"
+
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"

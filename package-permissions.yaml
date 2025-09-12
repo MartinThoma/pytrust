@@ -1,0 +1,5 @@
+pypdf:
+  file_system: true
+  env_vars: false
+  web_requests: true
+  exec_usage: false
