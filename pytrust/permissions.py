@@ -40,6 +40,15 @@ PERMISSIONS = [
             or (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr in ["system", "popen", "spawn"])
         ),
     ),
+    Permission(
+        "non_python_code",
+            lambda node: (
+                (isinstance(node, ast.Import) and any(n.name in ["subprocess", "ctypes", "cffi", "pyo3", "rust_cpython"] for n in node.names))
+                or (isinstance(node, ast.ImportFrom) and node.module in ["subprocess", "ctypes", "cffi", "pyo3", "rust_cpython"])
+                or (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr in ["CDLL", "dlopen", "ffi"])
+                or (isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in ["load_library", "load"])
+            ),
+    ),
 ]
 
 
